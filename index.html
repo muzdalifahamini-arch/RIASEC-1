@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tes Minat Bakat - Teori Holland (RIASEC)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6; /* bg-gray-100 */
+        }
+        .question-card {
+            display: none;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        .question-card.active {
+            display: block;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        /* Custom radio button styles for better appearance */
+        input[type="radio"] {
+            display: none;
+        }
+        input[type="radio"] + label {
+            display: inline-block;
+            padding: 10px 20px;
+            margin: 5px;
+            background-color: #e5e7eb; /* bg-gray-200 */
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 2px solid transparent;
+        }
+        input[type="radio"]:checked + label {
+            background-color: #3b82f6; /* bg-blue-500 */
+            color: white;
+            border-color: #2563eb; /* bg-blue-600 */
+        }
+        input[type="radio"]:hover + label:not(.selected-label) {
+            background-color: #d1d5db; /* bg-gray-300 */
+        }
+        /* Progress bar styling */
+        .progress-bar-container {
+            width: 100%;
+            background-color: #e5e7eb;
+            border-radius: 9999px; /* full rounded */
+            height: 8px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+        .progress-bar {
+            height: 100%;
+            background-color: #3b82f6;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+    </style>
+</head>
+<body class="text-gray-800 antialiased min-h-screen flex flex-col">
+
+    <header class="bg-white shadow-sm py-6">
+        <div class="max-w-4xl mx-auto px-4 text-center">
+            <h1 class="text-3xl font-bold text-blue-600">Tes Minat Bakat (RIASEC)</h1>
+            <p class="text-gray-500 mt-2">Berdasarkan Teori Pilihan Karir John L. Holland</p>
+        </div>
+    </header>
+
+    <main class="flex-grow container mx-auto px-4 py-8 max-w-3xl flex flex-col items-center">
+        
+        <!-- Intro Screen -->
+        <div id="intro-screen" class="bg-white p-8 rounded-xl shadow-md w-full text-center">
+            <h2 class="text-2xl font-semibold mb-4">Selamat Datang di Tes Minat Bakat (Versi Pelajar SMA)</h2>
+            <p class="mb-6 text-gray-600 text-left">Tes ini dirancang berdasarkan teori pilihan karir John L. Holland. Pernyataan di bawah ini telah disesuaikan dengan bahasa dan kehidupan sehari-harimu sebagai pelajar agar lebih mudah dipahami. Jawablah secara jujur sesuai dengan kebiasaan dan perasaan alamimu untuk membantumu menentukan arah jurusan kuliah atau karir di masa depan.</p>
+            <div class="bg-blue-50 p-4 rounded-lg text-left mb-6 text-sm text-blue-800">
+                <strong>Petunjuk:</strong> Pilih seberapa setuju kamu dengan setiap pernyataan. Tidak ada jawaban benar atau salah, cukup jadi dirimu sendiri!
+                <ul class="list-disc ml-5 mt-2">
+                    <li>Sangat Tidak Setuju</li>
+                    <li>Tidak Setuju</li>
+                    <li>Netral</li>
+                    <li>Setuju</li>
+                    <li>Sangat Setuju</li>
+                </ul>
+            </div>
+            <button onclick="startTest()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-full transition duration-300 shadow-md">Mulai Tes Sekarang</button>
+        </div>
+
+        <!-- Test Container -->
+        <div id="test-container" class="bg-white p-8 rounded-xl shadow-md w-full hidden">
+            
+            <div class="flex justify-between text-sm text-gray-500 mb-2">
+                <span>Progress</span>
+                <span id="progress-text">0/0</span>
+            </div>
+            <div class="progress-bar-container">
+                <div id="progress-bar" class="progress-bar"></div>
+            </div>
+
+            <form id="quiz-form">
+                <div id="questions-wrapper">
+                    <!-- Questions will be injected here by JavaScript -->
+                </div>
+
+                <div class="flex justify-between mt-8">
+                    <button type="button" id="prev-btn" onclick="prevQuestion()" class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2 px-6 rounded-lg transition duration-200 hidden">Sebelumnya</button>
+                    <button type="button" id="next-btn" onclick="nextQuestion()" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-lg transition duration-200 ml-auto" disabled>Selanjutnya</button>
+                    <button type="button" id="submit-btn" onclick="calculateResults()" class="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-6 rounded-lg transition duration-200 ml-auto hidden">Lihat Hasil</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Results Screen -->
+        <div id="results-screen" class="bg-white p-8 rounded-xl shadow-md w-full hidden">
+            <h2 class="text-3xl font-bold text-center text-gray-800 mb-6">Hasil Profil RIASEC Anda</h2>
+            <p class="text-center text-gray-600 mb-8">Berikut adalah skor dominan Anda berdasarkan jawaban yang diberikan.</p>
+            
+            <div id="top-types-container" class="flex flex-col md:flex-row justify-center gap-4 mb-8">
+                <!-- Top 3 types will be injected here -->
+            </div>
+
+            <div class="mb-8">
+                <h3 class="text-xl font-semibold mb-4 border-b pb-2">Rincian Skor:</h3>
+                <div id="chart-container" class="space-y-4">
+                    <!-- Bar charts for all 6 types will be injected here -->
+                </div>
+            </div>
+            
+            <div id="type-description-container" class="bg-gray-50 p-6 rounded-lg border border-gray-200 mb-8">
+                <h3 class="text-xl font-semibold mb-5 text-blue-700">Penjelasan 3 Tipe Dominan Anda (Kode Holland)</h3>
+                <div id="type-details" class="text-gray-700 leading-relaxed">
+                    <!-- Description will go here -->
+                </div>
+            </div>
+
+            <div class="text-center mt-8">
+                <button onclick="resetTest()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-full transition duration-300 shadow-md">Ulangi Tes</button>
+            </div>
+        </div>
+
+    </main>
+
+    <footer class="bg-white border-t py-4 mt-auto">
+        <div class="container mx-auto text-center text-sm text-gray-500 px-4">
+            &copy; 2026 Instrumen Tes RIASEC Komprehensif. <br class="md:hidden">Referensi Utama: Holland, J.L. (1997). <i>Making Vocational Choices</i> (3rd ed.). Psychological Assessment Resources.<br>Hanya untuk tujuan psikoedukasi dan pemetaan potensi diri.
+        </div>
+    </footer>
+
+    <script>
+        // Data Pertanyaan (Diformulasikan berdasarkan konstruk operasional Teori Holland)
+        // R = Realistic, I = Investigative, A = Artistic, S = Social, E = Enterprising, C = Conventional
+        const questions = [
+            // Realistic (Praktis, Fisik, Mesin, Luar Ruangan)
+            { id: 'r1', text: "Saya lebih suka belajar dengan praktik langsung, seperti membongkar pasang, memperbaiki barang, atau merakit mesin, daripada sekadar mendengarkan teori di kelas.", category: 'R' },
+            { id: 'r2', text: "Saya senang melakukan aktivitas fisik atau bekerja di luar ruangan (seperti berolahraga, bertukang, atau berkebun) daripada terus-terusan duduk diam di meja.", category: 'R' },
+            { id: 'r3', text: "Saya lebih bangga melihat hasil karya saya yang berbentuk nyata dan bisa disentuh secara langsung, dibandingkan karya berupa tulisan atau ide-ide yang rumit.", category: 'R' },
+            
+            // Investigative (Analitis, Sains, Memecahkan Masalah, Peneliti)
+            { id: 'i1', text: "Saya sangat suka mengamati sesuatu dengan teliti, bereksperimen di laboratorium sains sekolah, atau mencari tahu bagaimana suatu hal bisa terjadi secara ilmiah.", category: 'I' },
+            { id: 'i2', text: "Ketika ada masalah yang sulit, saya lebih suka mencari data, membaca artikel/buku, dan berpikir panjang untuk menemukan solusi yang paling masuk akal.", category: 'I' },
+            { id: 'i3', text: "Saya merasa sangat puas saat berhasil memecahkan soal logika, matematika, atau teka-teki yang rumit, meskipun itu memakan banyak waktu untuk berpikir.", category: 'I' },
+            
+            // Artistic (Kreatif, Seni, Kebebasan Berekspresi)
+            { id: 'a1', text: "Saya merasa lebih bebas dan bersemangat saat membuat karya seni, seperti menggambar, menulis cerita, bermain musik, atau mendesain sesuatu.", category: 'A' },
+            { id: 'a2', text: "Saya kurang suka dengan aturan yang terlalu kaku atau jadwal yang sangat ketat; saya butuh kebebasan untuk menggunakan imajinasi dan kreativitas saya.", category: 'A' },
+            { id: 'a3', text: "Mengekspresikan perasaan dan gaya unik saya (misal lewat karya atau penampilan) jauh lebih penting daripada harus selalu ikut-ikutan tren kebanyakan orang.", category: 'A' },
+            
+            // Social (Membantu, Bergaul, Mengajar, Empati)
+            { id: 's1', text: "Saya merasa sangat senang ketika bisa membantu teman yang sedang kesulitan, mendengarkan curhat mereka, atau mengajari mereka pelajaran yang belum dipahami.", category: 'S' },
+            { id: 's2', text: "Saya mudah bergaul dan sering menjadi penengah (pendamai) saat ada teman yang sedang berselisih paham agar mereka bisa akur kembali.", category: 'S' },
+            { id: 's3', text: "Bagi saya, menjadi orang yang peduli dan bermanfaat bagi orang lain jauh lebih berharga daripada sekadar mengejar jabatan bergengsi atau kekayaan materi.", category: 'S' },
+            
+            // Enterprising (Memimpin, Membujuk, Bisnis, Kompetitif)
+            { id: 'e1', text: "Saya suka mengambil peran sebagai ketua kelompok, memimpin rapat kepanitiaan/OSIS, atau mengatur teman-teman untuk mencapai target bersama.", category: 'E' },
+            { id: 'e2', text: "Saya merasa tertantang dan bersemangat ketika harus berdebat, bernegosiasi, atau meyakinkan orang lain agar setuju dengan ide saya (misalnya saat presentasi atau berjualan).", category: 'E' },
+            { id: 'e3', text: "Saya punya ambisi besar untuk sukses berbisnis, meraih posisi pemimpin yang dihormati, atau menjadi orang yang punya banyak pengaruh di masa depan.", category: 'E' },
+            
+            // Conventional (Rapi, Teratur, Data, Prosedur)
+            { id: 'c1', text: "Saya sangat suka menyusun jadwal kegiatan harian, merapikan catatan, mengatur uang kas kelas, atau mengerjakan tugas yang butuh ketelitian data.", category: 'C' },
+            { id: 'c2', text: "Saya lebih nyaman bekerja jika ada aturan yang jelas dan petunjuk pengerjaan (step-by-step) dari guru, sehingga saya tahu persis apa yang harus dilakukan.", category: 'C' },
+            { id: 'c3', text: "Menurut saya, kunci kesuksesan adalah kedisiplinan waktu, kerapian, ketelitian yang tinggi, dan patuh pada aturan yang sudah disepakati bersama.", category: 'C' }
+        ];
+
+        // Deskripsi Tipe Kepribadian
+        const typeDescriptions = {
+            'R': {
+                name: 'Realistic (Si Pekerja)',
+                color: 'bg-red-500',
+                textColor: 'text-red-600',
+                desc: 'Orang yang praktis, mekanis, dan realistis. Mereka lebih suka bekerja dengan alat, mesin, tumbuhan/hewan, atau berada di luar ruangan. Cenderung menghindari aktivitas sosial yang membutuhkan banyak interaksi intim. <br><br><strong>Pekerjaan cocok:</strong> Insinyur, Mekanik, Pilot, Petani, Arsitek, Teknisi.'
+            },
+            'I': {
+                name: 'Investigative (Si Pemikir)',
+                color: 'bg-yellow-500',
+                textColor: 'text-yellow-600',
+                desc: 'Orang yang analitis, intelektual, dan pengamat. Mereka suka menyelidiki, memahami, dan memecahkan masalah. Cenderung menghindari aktivitas yang sangat terstruktur atau monoton. <br><br><strong>Pekerjaan cocok:</strong> Ilmuwan, Peneliti, Ahli Matematika, Dokter, Programmer, Analis Sistem.'
+            },
+            'A': {
+                name: 'Artistic (Si Pencipta)',
+                color: 'bg-purple-500',
+                textColor: 'text-purple-600',
+                desc: 'Orang yang kreatif, orisinal, tidak teratur, dan ekspresif. Mereka menyukai aktivitas yang tidak terstruktur yang memungkinkan imajinasi dan ekspresi diri. Cenderung menghindari rutinitas dan aturan ketat. <br><br><strong>Pekerjaan cocok:</strong> Seniman, Penulis, Musisi, Desainer Grafis, Aktor, Arsitek (desain).'
+            },
+            'S': {
+                name: 'Social (Si Penolong)',
+                color: 'bg-green-500',
+                textColor: 'text-green-600',
+                desc: 'Orang yang ramah, pengertian, dan kooperatif. Mereka suka bekerja dengan orang lain untuk mendidik, membantu, menyembuhkan, atau melatih. Cenderung menghindari aktivitas yang sangat mekanis atau teknis. <br><br><strong>Pekerjaan cocok:</strong> Guru, Konselor, Perawat, Pekerja Sosial, Psikolog, HRD.'
+            },
+            'E': {
+                name: 'Enterprising (Si Pembujuk)',
+                color: 'bg-orange-500',
+                textColor: 'text-orange-600',
+                desc: 'Orang yang ambisius, energik, dan percaya diri. Mereka suka memimpin, memengaruhi orang lain, dan mencapai tujuan organisasi atau keuntungan ekonomi. Cenderung menghindari pekerjaan yang membutuhkan observasi mendalam atau presisi tinggi. <br><br><strong>Pekerjaan cocok:</strong> Pengusaha, Manajer, Sales, Pengacara, Politisi, Agen Real Estat.'
+            },
+            'C': {
+                name: 'Conventional (Si Pengatur)',
+                color: 'bg-blue-500',
+                textColor: 'text-blue-600',
+                desc: 'Orang yang terorganisir, teliti, dan menyukai keteraturan. Mereka suka bekerja dengan data, angka, atau sistem operasi yang jelas. Mengikuti prosedur dan aturan adalah keahlian mereka. <br><br><strong>Pekerjaan cocok:</strong> Akuntan, Administrator, Pustakawan, Teller Bank, Analis Keuangan, Sekretaris.'
+            }
+        };
+
+        // State variables
+        let currentQuestionIndex = 0;
+        let answers = {}; // Store answers { question_id: score }
+        // Shuffle questions initially to avoid pattern bias
+        let shuffledQuestions = [...questions].sort(() => Math.random() - 0.5);
+
+        // Elements
+        const introScreen = document.getElementById('intro-screen');
+        const testContainer = document.getElementById('test-container');
+        const resultsScreen = document.getElementById('results-screen');
+        const questionsWrapper = document.getElementById('questions-wrapper');
+        const nextBtn = document.getElementById('next-btn');
+        const prevBtn = document.getElementById('prev-btn');
+        const submitBtn = document.getElementById('submit-btn');
+        const progressBar = document.getElementById('progress-bar');
+        const progressText = document.getElementById('progress-text');
+
+        // Options
+        const options = [
+            { value: 1, label: "Sangat Tidak Setuju" },
+            { value: 2, label: "Tidak Setuju" },
+            { value: 3, label: "Netral" },
+            { value: 4, label: "Setuju" },
+            { value: 5, label: "Sangat Setuju" }
+        ];
+
+        function startTest() {
+            introScreen.classList.add('hidden');
+            testContainer.classList.remove('hidden');
+            buildQuestions();
+            showQuestion(0);
+        }
+
+        function buildQuestions() {
+            questionsWrapper.innerHTML = '';
+            shuffledQuestions.forEach((q, index) => {
+                const card = document.createElement('div');
+                card.className = 'question-card text-center';
+                card.id = `q-card-${index}`;
+
+                const qText = document.createElement('h3');
+                qText.className = 'text-xl md:text-2xl font-medium mb-8 text-gray-800';
+                qText.textContent = q.text;
+                card.appendChild(qText);
+
+                const optionsContainer = document.createElement('div');
+                optionsContainer.className = 'flex flex-wrap justify-center gap-2';
+
+                options.forEach(opt => {
+                    const inputId = `${q.id}_opt_${opt.value}`;
+                    const input = document.createElement('input');
+                    input.type = 'radio';
+                    input.name = q.id;
+                    input.value = opt.value;
+                    input.id = inputId;
+                    
+                    // Listen for changes to enable next button and save answer
+                    input.addEventListener('change', (e) => {
+                        answers[q.id] = parseInt(e.target.value);
+                        checkAnswerStatus();
+                        
+                        // Small delay then auto-next if on mobile (optional UX improvement)
+                        // setTimeout(() => { if(currentQuestionIndex < shuffledQuestions.length - 1) nextQuestion(); }, 300);
+                    });
+
+                    const label = document.createElement('label');
+                    label.setAttribute('for', inputId);
+                    label.textContent = opt.label;
+                    
+                    // Style label logic is handled in CSS based on :checked
+                    
+                    optionsContainer.appendChild(input);
+                    optionsContainer.appendChild(label);
+                });
+
+                card.appendChild(optionsContainer);
+                questionsWrapper.appendChild(card);
+            });
+        }
+
+        function showQuestion(index) {
+            // Hide all
+            document.querySelectorAll('.question-card').forEach(card => card.classList.remove('active'));
+            
+            // Show current
+            document.getElementById(`q-card-${index}`).classList.add('active');
+            
+            // Update UI state
+            updateProgress();
+            checkAnswerStatus();
+
+            // Toggle buttons
+            if (index === 0) {
+                prevBtn.classList.add('hidden');
+            } else {
+                prevBtn.classList.remove('hidden');
+            }
+
+            if (index === shuffledQuestions.length - 1) {
+                nextBtn.classList.add('hidden');
+                submitBtn.classList.remove('hidden');
+            } else {
+                nextBtn.classList.remove('hidden');
+                submitBtn.classList.add('hidden');
+            }
+        }
+
+        function nextQuestion() {
+            if (currentQuestionIndex < shuffledQuestions.length - 1) {
+                currentQuestionIndex++;
+                showQuestion(currentQuestionIndex);
+            }
+        }
+
+        function prevQuestion() {
+            if (currentQuestionIndex > 0) {
+                currentQuestionIndex--;
+                showQuestion(currentQuestionIndex);
+            }
+        }
+
+        function updateProgress() {
+            const total = shuffledQuestions.length;
+            const current = currentQuestionIndex + 1;
+            progressText.textContent = `${current}/${total}`;
+            const percentage = (current / total) * 100;
+            progressBar.style.width = `${percentage}%`;
+        }
+
+        function checkAnswerStatus() {
+            const currentQ = shuffledQuestions[currentQuestionIndex];
+            const hasAnswered = answers.hasOwnProperty(currentQ.id);
+            
+            if (hasAnswered) {
+                nextBtn.removeAttribute('disabled');
+                nextBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                
+                if(currentQuestionIndex === shuffledQuestions.length - 1) {
+                    submitBtn.removeAttribute('disabled');
+                    submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                }
+            } else {
+                nextBtn.setAttribute('disabled', 'true');
+                nextBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                
+                if(currentQuestionIndex === shuffledQuestions.length - 1) {
+                    submitBtn.setAttribute('disabled', 'true');
+                    submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                }
+            }
+        }
+
+        function calculateResults() {
+            // Initialize scores
+            let scores = { 'R': 0, 'I': 0, 'A': 0, 'S': 0, 'E': 0, 'C': 0 };
+            
+            // Maximum possible score per category (3 questions * max 5 points = 15)
+            // If you add more questions, calculate this dynamically based on questions array
+            const maxScorePerCategory = questions.filter(q => q.category === 'R').length * 5;
+
+            // Sum scores
+            shuffledQuestions.forEach(q => {
+                if (answers[q.id]) {
+                    scores[q.category] += answers[q.id];
+                }
+            });
+
+            // Convert scores to array for sorting
+            const scoresArray = Object.keys(scores).map(key => {
+                return {
+                    type: key,
+                    score: scores[key],
+                    percentage: (scores[key] / maxScorePerCategory) * 100
+                };
+            });
+
+            // Sort descending
+            scoresArray.sort((a, b) => b.score - a.score);
+
+            displayResults(scoresArray);
+        }
+
+        function displayResults(sortedScores) {
+            testContainer.classList.add('hidden');
+            resultsScreen.classList.remove('hidden');
+
+            const topTypesContainer = document.getElementById('top-types-container');
+            const chartContainer = document.getElementById('chart-container');
+            const typeDetails = document.getElementById('type-details');
+
+            topTypesContainer.innerHTML = '';
+            chartContainer.innerHTML = '';
+            
+            // Display Top 3 (Holland Code)
+            const hollandCode = sortedScores.slice(0, 3).map(s => s.type).join('');
+            
+            sortedScores.slice(0, 3).forEach((item, index) => {
+                const typeData = typeDescriptions[item.type];
+                const badge = document.createElement('div');
+                badge.className = `${typeData.color} text-white px-6 py-4 rounded-xl shadow text-center flex-1`;
+                badge.innerHTML = `
+                    <div class="text-sm opacity-80 uppercase tracking-wide">Peringkat ${index + 1}</div>
+                    <div class="text-3xl font-bold my-1">${item.type}</div>
+                    <div class="font-medium">${typeData.name.split(' ')[0]}</div>
+                `;
+                topTypesContainer.appendChild(badge);
+            });
+
+            // Build Chart
+            sortedScores.forEach(item => {
+                const typeData = typeDescriptions[item.type];
+                const barRow = document.createElement('div');
+                barRow.className = 'flex items-center gap-4';
+                
+                barRow.innerHTML = `
+                    <div class="w-24 font-semibold text-right ${typeData.textColor}">${typeData.name.split(' ')[0]}</div>
+                    <div class="flex-grow bg-gray-200 h-6 rounded-full overflow-hidden">
+                        <div class="h-full ${typeData.color} transition-all duration-1000 ease-out" style="width: 0%;" data-target="${item.percentage}%"></div>
+                    </div>
+                    <div class="w-12 text-sm text-gray-600 font-medium">${item.score} pt</div>
+                `;
+                chartContainer.appendChild(barRow);
+            });
+
+            // Animate bars
+            setTimeout(() => {
+                const bars = chartContainer.querySelectorAll('.flex-grow > div');
+                bars.forEach(bar => {
+                    bar.style.width = bar.getAttribute('data-target');
+                });
+            }, 100);
+
+            // Display 3 dominant types details (Holland Code combination)
+            let detailsHTML = `<p class="mb-6">Kepribadian dan minatmu adalah gabungan dari beberapa tipe. Berikut adalah 3 tipe minat terkuatmu yang membentuk <strong>Kode Holland (${hollandCode})</strong>:</p>`;
+            
+            const dominanLabels = ['Utama (Paling Dominan)', 'Kedua (Pendukung)', 'Ketiga (Pelengkap)'];
+            
+            sortedScores.slice(0, 3).forEach((item, index) => {
+                const typeData = typeDescriptions[item.type];
+                detailsHTML += `
+                    <div class="mb-6 bg-white p-5 rounded-lg border-l-4 border-${typeData.color.split('-')[1]}-500 shadow-sm">
+                        <h4 class="text-lg font-bold ${typeData.textColor} mb-2">
+                            ${index + 1}. Minat ${dominanLabels[index]}: ${typeData.name}
+                        </h4>
+                        <p class="text-gray-600 text-sm md:text-base">${typeData.desc}</p>
+                    </div>
+                `;
+            });
+
+            detailsHTML += `
+                <div class="mt-6 p-5 bg-blue-100 rounded-lg border border-blue-200 shadow-inner">
+                    <p class="font-semibold text-blue-900 text-lg mb-2">Apa arti kombinasi <span class="tracking-widest font-bold bg-blue-200 px-2 py-1 rounded">${hollandCode}</span> ini?</p>
+                    <p class="text-sm md:text-base text-blue-800 leading-relaxed">
+                        Jarang ada orang yang hanya memiliki satu tipe saja. Ketiga elemen ini bekerja sama membentuk karakter unikmu. 
+                        Untuk mencari jurusan kuliah atau karir yang paling pas, cobalah cari tahu pekerjaan yang menggabungkan ketiga unsur ini. 
+                        Kamu bisa mencari di internet dengan kata kunci seperti: <strong>"Jurusan kuliah untuk RIASEC ${hollandCode}"</strong> atau <strong>"Karir untuk tipe ${hollandCode}"</strong>.
+                    </p>
+                </div>
+            `;
+            
+            typeDetails.innerHTML = detailsHTML;
+        }
+
+        function resetTest() {
+            currentQuestionIndex = 0;
+            answers = {};
+            // Reshuffle for a fresh feel
+            shuffledQuestions = [...questions].sort(() => Math.random() - 0.5);
+            
+            resultsScreen.classList.add('hidden');
+            introScreen.classList.remove('hidden');
+            
+            // Scroll to top
+            window.scrollTo(0, 0);
+        }
+
+        // Initialize state check on load
+        checkAnswerStatus();
+    </script>
+</body>
+</html>
